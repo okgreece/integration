@@ -1,14 +1,19 @@
-FROM php:7.0.13-apache
+FROM php:7.1.20-apache
 
-RUN echo "deb http://ftp.de.debian.org/debian jessie-backports main" >> /etc/apt/sources.list
+#RUN echo "deb http://ftp.de.debian.org/debian jessie-backports main" >> /etc/apt/sources.list
 
-RUN apt-get -y update && apt-get install -y git gettext bash curl mysql-client zip unzip
+RUN apt-get -y update && apt-get install -y git gettext bash curl mysql-client zip unzip gnupg software-properties-common
 
-RUN echo 'deb http://packages.dotdeb.org jessie all' > /etc/apt/sources.list.d/dotdeb.list
-RUN curl http://www.dotdeb.org/dotdeb.gpg | apt-key add -
+#RUN echo 'deb http://packages.dotdeb.org jessie all' > /etc/apt/sources.list.d/dotdeb.list
+#RUN curl http://www.dotdeb.org/dotdeb.gpg | apt-key add -
 RUN apt-get update -y && \
-    apt-get install -y php7.0-sqlite3 libsqlite3-dev libsqlite3-0 && \
+    apt-get install -y libsqlite3-dev libsqlite3-0 && \
     docker-php-ext-install pdo_sqlite
+
+#RUN add-apt-repository ppa:ondrej/php
+
+#RUN apt-get update &&  \
+#    apt-get install -y php-sqlite3
 
 RUN git config --global url."https://github.com/".insteadOf git@github.com: && \
     git config --global url."https://".insteadOf git://
@@ -20,16 +25,16 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 # RUN docker-php-ext-configure mbstring --enable-mbstring && docker-php-ext-install mbstring
 
 # Install additional packages:
-RUN apt-get update -y && apt-get install -y libgd3 libapache2-mod-php7.0 \
-    php7.0-xml php7.0-json php7.0-xsl php7.0-mcrypt \
-    php7.0-common php7.0-zip php7.0-mbstring php7.0-gd libpng-dev libraptor2-dev
-RUN docker-php-ext-install gd
-RUN phpenmod gd
+#RUN apt-get update -y && apt-get install -y libgd3 libapache2-mod-php7.1 \
+#    php7.1-xml php7.1-json php7.1-xsl php7.1-mcrypt \
+#    php7.1-common php7.1-zip php7.1-mbstring php7.1-gd libpng-dev libraptor2-dev
+RUN apt-get install -y libpng-dev libraptor2-dev libmcrypt-dev
+RUN docker-php-ext-install gd  xsl mcrypt zip mbstring 
 RUN apt-get upgrade -y
 
 # Enable Apache mod_rewrite
 RUN a2enmod rewrite
-RUN a2enmod php7.0
+#RUN a2enmod php7.1
 RUN a2enmod proxy
 RUN a2enmod proxy_http
 RUN a2enmod actions
@@ -48,6 +53,7 @@ RUN git clone https://github.com/okgreece/RDFBrowser.git $APP_DIR/
 
 COPY ./.env $APP_DIR/.env
 RUN composer install
+
 RUN php artisan key:generate
 RUN chmod -R a+rwx $APP_DIR
 
